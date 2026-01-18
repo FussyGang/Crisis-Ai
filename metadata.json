@@ -1,0 +1,8 @@
+{
+  "name": "CrisisGuard AI2",
+  "description": "An advanced, life-saving crisis response system powered by Gemini AI. Provides real-time protocols, location-based shelter finding, and professional emergency guidance.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}

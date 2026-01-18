@@ -1,0 +1,378 @@
+<div class="min-h-screen flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white relative overflow-hidden">
+  
+  <!-- Background Effects -->
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0 opacity-20">
+    <div class="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-red-900/30 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-blue-900/20 rounded-full blur-[100px]"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="z-10 w-full max-w-4xl flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center shadow-red-glow">
+        <span class="text-2xl font-bold">CG</span>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tighter leading-none text-white">CRISISGUARD <span class="text-red-500">AI</span></h1>
+        <p class="text-xs text-gray-400 uppercase tracking-widest">Advanced Response System</p>
+      </div>
+    </div>
+    
+    @if (viewState() !== 'home') {
+      <button (click)="resetApp()" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+        Cancel / Home
+      </button>
+    }
+  </header>
+
+  <main class="z-10 w-full max-w-3xl flex-1 flex flex-col items-center relative">
+
+    <!-- HOME VIEW -->
+    @if (viewState() === 'home') {
+      <div class="w-full flex flex-col items-center animate-fade-in space-y-8">
+        
+        <div class="text-center space-y-4 max-w-xl">
+          <p class="text-red-500 font-bold tracking-[0.2em] animate-pulse-slow">LIFE-SAVING AI ACTIVE</p>
+          <h2 class="text-4xl md:text-5xl font-black heading-font leading-tight">
+            WHAT IS YOUR <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">EMERGENCY?</span>
+          </h2>
+          <p class="text-gray-400">
+            Select a crisis below or use the Universal SOS button. AI will pinpoint your location and coordinate rescue protocols immediately.
+          </p>
+        </div>
+
+        <!-- Universal SOS Button -->
+        <button 
+          (click)="startAssessment('General SOS')"
+          class="group relative w-full max-w-sm h-24 bg-red-600 hover:bg-red-500 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.4)] transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-between px-8 overflow-hidden"
+        >
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div class="flex flex-col items-start">
+            <span class="text-2xl font-black italic">UNIVERSAL SOS</span>
+            <span class="text-xs uppercase opacity-80">Analyze Situation Auto-Mode</span>
+          </div>
+          <span class="text-4xl">🚨</span>
+        </button>
+
+        <div class="w-full flex items-center gap-4 my-2">
+           <div class="h-px bg-gray-800 flex-1"></div>
+           <span class="text-gray-500 text-sm uppercase">Or Select Incident</span>
+           <div class="h-px bg-gray-800 flex-1"></div>
+        </div>
+
+        <!-- Disaster Grid -->
+        <app-disaster-grid (selectDisaster)="startAssessment($event)"></app-disaster-grid>
+
+        <!-- Talk to Pro AI -->
+        <button 
+          (click)="enterChatMode()"
+          class="mt-8 flex items-center gap-3 px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-600 transition-colors"
+        >
+          <span class="flex h-3 w-3 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+          </span>
+          <span class="font-medium text-sm">Talk to Professional Crisis Agent</span>
+        </button>
+
+      </div>
+    }
+
+    <!-- ASSESSING VIEW (Location + Severity) -->
+    @if (viewState() === 'assessing') {
+      <div class="w-full max-w-lg bg-gray-800/50 backdrop-blur-md border border-gray-700 p-8 rounded-3xl animate-fade-in shadow-2xl">
+        <h3 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <span class="text-yellow-500">⚠️</span> Situation Report
+        </h3>
+
+        <!-- Step 1: Location -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-semibold text-gray-300">Location Status</label>
+            @if (locationState().loading) {
+              <div class="flex items-center gap-2">
+                 <span class="text-xs text-blue-400 animate-pulse">Triangulating satellites...</span>
+                 <button (click)="enableManualEntry()" class="text-xs underline text-gray-400 hover:text-white">Enter Manually</button>
+              </div>
+            } @else if (locationState().isFallbackMode) {
+              <span class="text-xs text-yellow-400">Manual Entry Active</span>
+            } @else if (locationState().error) {
+              <span class="text-xs text-red-400">Signal Lost</span>
+            } @else {
+              <span class="text-xs text-green-400">GPS Locked</span>
+            }
+          </div>
+          
+          <div class="space-y-2">
+            <!-- Manual Input or GPS Display -->
+            <input 
+              #locInput
+              type="text" 
+              [value]="locationState().isFallbackMode ? (locationState().manualAddress || '') : (locationState().coords ? locationState().coords?.latitude + ', ' + locationState().coords?.longitude : 'Acquiring...')"
+              [readonly]="!locationState().isFallbackMode"
+              [class.cursor-not-allowed]="!locationState().isFallbackMode"
+              [class.ring-2]="locationState().isFallbackMode"
+              [class.ring-red-500]="locationState().isFallbackMode"
+              [placeholder]="locationState().isFallbackMode ? 'Type Address, City, or Landmark' : 'Acquiring GPS...'"
+              (input)="updateManualLocation($event)"
+              (keydown.enter)="handleLocationEnter()"
+              autocomplete="street-address"
+              class="w-full bg-gray-900 border border-gray-700 rounded-lg py-3 px-4 text-gray-300 font-mono text-sm focus:outline-none transition-colors"
+            >
+            
+            <!-- Contextual Actions -->
+            <div class="flex justify-between items-center text-xs">
+              <!-- Switchers -->
+               @if (locationState().isFallbackMode) {
+                  <button (click)="retryLocation()" class="text-blue-400 hover:text-blue-300 underline">
+                    Use GPS Instead
+                  </button>
+               } @else if (!locationState().loading && locationState().coords) {
+                 <button (click)="enableManualEntry()" class="text-gray-400 hover:text-white underline">
+                    Edit Location Manually
+                  </button>
+               }
+               
+               <!-- Map Verification -->
+               @if (locationState().manualAddress || locationState().coords) {
+                 <a [href]="mapQueryUrl()" target="_blank" class="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full transition-colors text-white font-medium">
+                   <span>🗺️</span> Verify on Map
+                 </a>
+               }
+            </div>
+          </div>
+          
+          @if (locationState().error && !locationState().isFallbackMode) {
+             <p class="text-xs text-red-400 mt-2">Error: {{locationState().error}}</p>
+          }
+        </div>
+
+        <!-- Step 2: Severity / Form -->
+        <div class="space-y-4">
+          <label class="block text-sm font-semibold text-gray-300">
+            What is happening? (Severity, Injured, Trapped?)
+          </label>
+          <textarea 
+            #severityInput
+            rows="3" 
+            placeholder="e.g. Trapped in basement, water rising. 2 people injured."
+            class="w-full bg-gray-900 border border-gray-600 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+          ></textarea>
+          
+          <div class="flex gap-2 text-sm overflow-x-auto pb-2">
+            <button (click)="quickFill(severityInput, 'Critical Injury')" class="whitespace-nowrap px-3 py-1 bg-gray-700 rounded-full hover:bg-red-900/50 hover:text-red-200 transition-colors">Critical Injury</button>
+            <button (click)="quickFill(severityInput, 'Trapped')" class="whitespace-nowrap px-3 py-1 bg-gray-700 rounded-full hover:bg-red-900/50 hover:text-red-200 transition-colors">Trapped</button>
+            <button (click)="quickFill(severityInput, 'Safe, need instructions')" class="whitespace-nowrap px-3 py-1 bg-gray-700 rounded-full hover:bg-green-900/50 hover:text-green-200 transition-colors">Safe</button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex flex-col gap-3">
+          <button 
+            (click)="generateProtocol(severityInput.value)"
+            [disabled]="isGenerating()"
+            class="w-full py-4 bg-red-600 hover:bg-red-500 disabled:bg-red-900 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+          >
+            @if (isGenerating()) {
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              CONNECTING TO RESCUE AI...
+            } @else {
+              INITIATE RESCUE PROTOCOL
+            }
+          </button>
+          
+          <button (click)="skipToChat()" class="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-gray-300 font-medium">
+            Skip & Chat Manually
+          </button>
+        </div>
+
+      </div>
+    }
+
+    <!-- PROTOCOL VIEW -->
+    @if (viewState() === 'protocol') {
+      <div class="w-full h-full flex flex-col items-center animate-fade-in">
+        
+        <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Main Instructions -->
+          <div class="lg:col-span-2 space-y-4">
+            <div class="bg-gray-800 rounded-2xl p-6 border-l-4 border-red-500 shadow-xl relative min-h-[300px]">
+              
+              @if (isGenerating()) {
+                <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-800/90 z-20">
+                  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mb-4"></div>
+                  <p class="text-red-400 font-bold animate-pulse">ANALYZING SCENARIO...</p>
+                </div>
+              }
+
+              <h2 class="text-xl font-bold text-red-400 mb-4 uppercase tracking-widest flex items-center gap-2">
+                <span class="animate-pulse">●</span> Active Protocol: {{ selectedDisaster() }}
+              </h2>
+              
+              <div class="prose prose-invert prose-sm max-w-none text-gray-200 whitespace-pre-line leading-relaxed">
+                {{ protocolResult() }}
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <a href="tel:911" class="bg-green-600 hover:bg-green-500 p-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
+                <span>📞</span> CALL 911 (Global Sim)
+              </a>
+              <button (click)="enterChatMode()" class="bg-blue-600 hover:bg-blue-500 p-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
+                <span>💬</span> ASK AI MORE
+              </button>
+            </div>
+          </div>
+
+          <!-- Sidebar Info (Nearby Resources) -->
+          <div class="space-y-4">
+            
+            <!-- Location Box -->
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+              <h4 class="text-gray-400 text-xs font-bold uppercase mb-2">My Location</h4>
+              <div class="bg-gray-900 rounded p-2 font-mono text-xs text-green-400 break-all border border-gray-700">
+                 @if (locationState().coords) {
+                   {{locationState().coords?.latitude}}, {{locationState().coords?.longitude}}
+                 } @else {
+                   {{locationState().manualAddress}}
+                 }
+              </div>
+              <a 
+                [href]="mapQueryUrl()"
+                target="_blank"
+                class="mt-2 flex items-center justify-center gap-2 w-full py-2 bg-gray-700 hover:bg-gray-600 text-xs rounded transition-colors text-white"
+              >
+                📍 Open in Google Maps
+              </a>
+            </div>
+
+            <!-- Functional Resources List -->
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative min-h-[200px]">
+               <h4 class="text-gray-400 text-xs font-bold uppercase mb-3 flex justify-between">
+                 Nearby Emergency Units
+                 @if (isLoadingResources()) { <span class="animate-spin">⏳</span> }
+               </h4>
+               
+               @if (isLoadingResources()) {
+                 <div class="space-y-3">
+                   <div class="h-16 bg-gray-700/50 rounded animate-pulse"></div>
+                   <div class="h-16 bg-gray-700/50 rounded animate-pulse"></div>
+                   <div class="h-16 bg-gray-700/50 rounded animate-pulse"></div>
+                 </div>
+               } @else if (nearbyResources().length > 0) {
+                 <div class="space-y-3">
+                   @for (res of nearbyResources(); track res.name) {
+                     <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700 hover:border-blue-500/50 transition-colors">
+                        <div class="flex justify-between items-start mb-1">
+                          <h5 class="font-bold text-sm text-gray-200">{{ res.name }}</h5>
+                          <span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-gray-700 text-gray-400">{{ res.type }}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2 truncate">{{ res.address }}</p>
+                        
+                        <div class="flex gap-2">
+                           <a [href]="'tel:' + res.phone" class="flex-1 bg-green-900/30 hover:bg-green-800/50 text-green-400 text-xs py-1.5 rounded text-center border border-green-900 transition-colors">
+                             📞 Call
+                           </a>
+                           <a [href]="'https://www.google.com/maps/search/?api=1&query=' + res.name + ' ' + res.address" target="_blank" class="flex-1 bg-blue-900/30 hover:bg-blue-800/50 text-blue-400 text-xs py-1.5 rounded text-center border border-blue-900 transition-colors">
+                             🗺️ Map
+                           </a>
+                        </div>
+                     </div>
+                   }
+                 </div>
+               } @else {
+                 <div class="text-center py-8 text-gray-500 text-sm">
+                   <p>No verified resources found nearby.</p>
+                   <a href="tel:911" class="block mt-2 text-red-400 font-bold underline">Call 911 Immediately</a>
+                 </div>
+               }
+            </div>
+          </div>
+
+        </div>
+      </div>
+    }
+
+    <!-- CHAT MODE -->
+    @if (viewState() === 'chat') {
+      <div class="w-full max-w-2xl h-[70vh] flex flex-col bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl animate-fade-in">
+        
+        <!-- Chat Header -->
+        <div class="bg-gray-900 p-4 border-b border-gray-700 flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <div class="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span class="font-bold">Professional Crisis Agent</span>
+          </div>
+          <button (click)="viewState.set('home')" class="text-gray-400 hover:text-white text-sm">Close</button>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4" #chatContainer>
+          @for (msg of chatHistory(); track $index) {
+            <div [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+              <div 
+                [class]="msg.role === 'user' 
+                  ? 'bg-blue-600 text-white rounded-br-none' 
+                  : 'bg-gray-700 text-gray-200 rounded-bl-none'"
+                class="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
+              >
+                <div class="whitespace-pre-wrap">{{ msg.text }}</div>
+              </div>
+            </div>
+          }
+          @if (isChatting()) {
+            <div class="flex justify-start">
+               <div class="bg-gray-700 rounded-2xl rounded-bl-none px-4 py-3 flex gap-1 items-center">
+                 <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                 <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                 <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+               </div>
+            </div>
+          }
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-gray-900 border-t border-gray-700 flex gap-2 items-center">
+          @if (isVoiceSupported()) {
+            <button 
+              (click)="toggleVoice()"
+              [class.text-red-500]="isListening()"
+              [class.animate-pulse]="isListening()"
+              class="p-3 bg-gray-800 hover:bg-gray-700 rounded-full text-white transition-all relative group"
+              title="Toggle Voice Input"
+            >
+              <span class="text-xl relative z-10">{{ isListening() ? '⏹' : '🎤' }}</span>
+              
+              <!-- Listening Pulse Effect -->
+              @if (isListening()) {
+                <span class="absolute inset-0 rounded-full bg-red-500/20 animate-ping"></span>
+              }
+            </button>
+          }
+
+          <input 
+            #chatInput
+            (keyup.enter)="sendMessage(chatInput.value); chatInput.value = ''"
+            type="text" 
+            [placeholder]="isListening() ? 'Listening... Speak now.' : 'Type your message...'"
+            [class.placeholder-red-400]="isListening()"
+            [class.border-red-500]="isListening()"
+            class="flex-1 bg-gray-800 border border-transparent rounded-full px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+          >
+          
+          <button 
+            (click)="sendMessage(chatInput.value); chatInput.value = ''"
+            class="p-3 bg-blue-600 hover:bg-blue-500 rounded-full text-white transition-colors"
+          >
+            ➤
+          </button>
+        </div>
+      </div>
+    }
+
+  </main>
+</div>
