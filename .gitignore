@@ -6,30 +6,42 @@ dist/
 .vscode/
 dist.zip
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-coverage/# Logs
+```ignore
+# Node / build outputs
+node_modules/
+dist/
+dist-ssr/
+dist.zip
+.vercel/
+.env*
+
+# Logs
 logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Angular / tool caches
+.angular/
+.angular/cache/
+.cache/
+/.vite/
+/.parcel-cache/
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+*.local
+
+```
